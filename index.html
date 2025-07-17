@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Livatar: Real-Time Talking Heads Generation with Tailored Flow Matching">
+  <meta name="keywords" content="Video Generation, Diffusion Models">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Livatar-1: Real-Time Talking Heads Generation with Tailored Flow Matching</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  
+  <!-- Favicon settings -->
+  <link rel="icon" type="image/x-icon" href="https://media.licdn.com/dms/image/v2/D560BAQF0T33oodtNuQ/company-logo_200_200/company-logo_200_200/0/1719256398552?e=2147483647&v=beta&t=SInJv1CATW9LcbW5neQWz8-yMjce5eO-MLCdBZTiO0s">
+  <link rel="shortcut icon" type="image/x-icon" href="https://media.licdn.com/dms/image/v2/D560BAQF0T33oodtNuQ/company-logo_200_200/company-logo_200_200/0/1719256398552?e=2147483647&v=beta&t=SInJv1CATW9LcbW5neQWz8-yMjce5eO-MLCdBZTiO0s">
+  <link rel="apple-touch-icon" href="https://media.licdn.com/dms/image/v2/D560BAQF0T33oodtNuQ/company-logo_200_200/company-logo_200_200/0/1719256398552?e=2147483647&v=beta&t=SInJv1CATW9LcbW5neQWz8-yMjce5eO-MLCdBZTiO0s">
+  <meta name="msapplication-TileImage" content="https://media.licdn.com/dms/image/v2/D560BAQF0T33oodtNuQ/company-logo_200_200/company-logo_200_200/0/1719256398552?e=2147483647&v=beta&t=SInJv1CATW9LcbW5neQWz8-yMjce5eO-MLCdBZTiO0s">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+  <style>
+    /* Dark theme styles */
+    body {
+      background-color: #0a0a0a;
+      color: #ffffff;
+    }
+    .title, .subtitle, .content, .publication-title {
+      color: #ffffff !important;
+    }
+    .hero.is-light {
+      background-color: #1a1a1a !important;
+      color: #ffffff !important;
+    }
+    .section {
+      background-color: #0a0a0a;
+    }
+    .footer {
+      background-color: #1a1a1a;
+      color: #ffffff;
+    }
+    .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+      color: #ffffff;
+    }
+    pre {
+      background-color: #1a1a1a;
+      color: #ffffff;
+    }
+    code {
+      background-color: #2a2a2a;
+      color: #ffffff;
+    }
+    .has-text-justified {
+      color: #ffffff;
+    }
+    .hero {
+      margin-top: 10rem;
+      background-color: #0a0a0a !important;
+    }
+    .hero-transparent {
+      position: relative;
+      z-index: 2;
+      margin-top: 25vh;
+      background-color: transparent !important;
+    }
+    .hero, .hero-body, .hero.is-small {
+      background-color: #0a0a0a !important;
+    }
+    html {
+      background-color: #0a0a0a !important;
+    }
+    .column-spacing {
+      margin: 0 2rem !important;
+    }
+    .video-description {
+      min-height: 4.5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+    .prompt-wrap {
+      position: relative;
+    }
+
+    .prompt {
+      max-width: calc(100% - 20px);
+      position: absolute;
+      background: rgba(0,0,0,0.1);
+      color: rgba(255,255,255,0.9);
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      bottom: 10px;
+      left: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+      line-height: 1.4;
+      
+    }
+
+    .prompt-wrap:hover .prompt {
+      opacity: 1;
+      pointer-events: all;
+    }
+  </style>
+  <style>
+    .video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 200vh;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .video-background video {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 100%;
+      width: auto;
+      height: 100vh;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
+      filter: blur(3px) brightness(0.8);
+    }
+
+    .video-background video.active {
+      opacity: 0.15;
+    }
+
+    .video-background::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-transparent {
+      position: relative;
+      z-index: 2;
+      margin-top: 0;
+      background-color: transparent !important;
+    }
+
+    .hero-transparent * {
+      position: relative;
+      z-index: 2;
+      background-color: transparent !important;
+    }
+
+    .hero-transparent .title,
+    .hero-transparent .subtitle,
+    .hero-transparent .publication-authors,
+    .hero-transparent .publication-links {
+      position: relative;
+      z-index: 2;
+      background-color: transparent !important;
+    }
+
+    .hero {
+      position: relative;
+      z-index: 2;
+    }
+  </style>
+  <style>
+    .carousel {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+      font-size: 0; /* Remove any potential inline-block spacing */
+    }
+    
+    .carousel::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+
+    .prompt-wrap {
+      flex: 0 0 auto;
+      height: 180px;
+      position: relative;
+      font-size: 16px; /* Reset font size for content */
+      display: flex; /* Use flexbox to center the video */
+      justify-content: center; /* Center horizontally */
+      align-items: center; /* Center vertically */
+    }
+
+    .prompt-wrap video {
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+      display: block; /* Remove any potential inline spacing */
+      margin: 0; /* Remove any margins */
+    }
+
+    .results-carousel {
+      padding: 0;
+      white-space: nowrap; /* Prevent wrapping */
+    }
+  </style>
+</head>
+<body>
+
+<div class="video-background" style="opacity: 1;">
+  <video id="bg-video-1" autoplay muted loop playsinline style="opacity: 1;">
+    <source src="./static/livatar_video/background/9b51150d-9390-493c-8092-ed3335b750fa.mp4" type="video/mp4">
+  </video>
+  <video id="bg-video-2" autoplay muted loop playsinline style="opacity: 1;">
+    <source src="./static/livatar_video/background/04749340-dc02-4a0f-af00-c785b044da04.mp4" type="video/mp4">
+  </video>
+  <video id="bg-video-3" autoplay muted loop playsinline style="opacity: 1;">
+    <source src="./static/livatar_video/background/b6afbea2-317e-4274-bb37-7a28dbf5910b.mp4" type="video/mp4">
+  </video>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const videos = document.querySelectorAll('.video-background video');
+    let currentVideoIndex = 0;
+    
+    // Function to preload videos
+    const preloadVideos = async () => {
+      for (const video of videos) {
+        try {
+          await video.play();
+          video.style.opacity = '0';
+        } catch (error) {
+          console.log("Video play failed:", error);
+        }
+      }
+    };
+
+    // Initialize first video
+    const showInitialVideo = () => {
+      videos[0].style.opacity = '0.6';
+    };
+
+    // Preload videos and show first one
+    preloadVideos().then(showInitialVideo);
+    
+    // Change video every 8 seconds with crossfade
+    setInterval(() => {
+      // Fade out current video
+      videos[currentVideoIndex].style.opacity = '0';
+      
+      // Update index
+      currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+      
+      // Fade in next video
+      videos[currentVideoIndex].style.opacity = '0.6';
+    }, 8000);
+
+    // Add scroll event listener to adjust video opacity
+    window.addEventListener('scroll', () => {
+      const scrollPosition = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const maxOpacity = 0.6;
+      const minOpacity = 0.00;
+      
+      // Calculate opacity based on scroll position
+      // Decrease opacity as user scrolls down
+      const opacity = Math.max(maxOpacity - (scrollPosition / windowHeight) * maxOpacity, minOpacity);
+      
+      // Apply opacity to current video
+      videos[currentVideoIndex].style.opacity = opacity.toString();
+    });
+  });
+</script>
+
+<section class="hero-transparent" style="min-height: 100vh; padding-top: 30vh;">
+  <div class="column has-text-centered">
+    <h1 class="title is-1 publication-title mb-1" style="background: transparent !important; text-shadow: 0px 0px 15px rgba(255, 255, 255, 0.8); color: white;">Livatar-1</h1>
+    <h2 class="subtitle has-text-centered mt-1" style="background: transparent !important; color: white;">Real-Time Talking Heads Generation with Tailored Flow Matching</h2>
+    
+    <div class="is-size-5 publication-authors" style="background: transparent !important;">
+      <span class="author-block" style="background: transparent !important;">
+        <a href="https://h-liu1997.github.io/" style="background: transparent !important; color: white;">Haiyang Liu</a ><sup style="color: white;">*</sup>
+      </span>
+      <span class="author-block" style="background: transparent !important;">
+        <a href="" style="background: transparent !important; color: white;">Xiaolin Hong</a ><sup style="color: white;">*</sup>
+      </span>
+      <span class="author-block" style="background: transparent !important;">
+        <a href="https://github.com/yangshurong" style="background: transparent !important; color: white;">Xuancheng Yang</a ><sup style="color: white;">*</sup>
+      </span>
+      <span class="author-block" style="background: transparent !important;">
+        <a href="https://ruanyudi.github.io/" style="background: transparent !important; color: white;">Yudi Ruan</a ><sup style="color: white;">*</sup>
+      </span>
+    </div>  
+
+    <div class="is-size-5 publication-authors" style="background: transparent !important;">
+      <span class="author-block" style="background: transparent !important; margin-right: 1rem;">
+        <a href="" style="background: transparent !important; color: white;">Xiang Lian</a >
+      </span>
+      <span class="author-block" style="background: transparent !important; margin-right: 1rem;">
+        <a href="https://mlingelbach.com/" style="background: transparent !important; color: white;">Michael Lingelbach</a >
+      </span>
+      <span class="author-block" style="background: transparent !important; margin-right: 1rem;">
+        <a href="https://scholar.google.com/citations?user=ocMf7fQAAAAJ&hl=zh-CN" style="background: transparent !important; color: white;">Hongwei Yi</a >
+      </span>
+      <span class="author-block" style="background: transparent !important;">
+        <a href="https://scholar.google.com/citations?user=c3wfQs0AAAAJ&hl=en" style="background: transparent !important; color: white;">Wei Li</a ><sup style="color: white;">†</sup>
+      </span>
+    </div>
+
+    <div class="is-size-5 publication-authors" style="background: transparent !important;">
+      <span class="author-block" style="background: transparent !important; color: white;">Hedra Inc.</span>
+    </div>
+
+    <div class="is-size-5 publication-authors" style="background: transparent !important;">
+      <span class="author-block" style="background: transparent !important; color: white;"><sup>*</sup>Equal contribution</span>
+      <span class="author-block" style="background: transparent !important; color: white;"><sup>†</sup>Project lead</span>
+    </div>
+
+    <div class="column has-text-centered" style="background: transparent !important;">
+      <div class="publication-links" style="background: transparent !important;">
+        <span class="link-block" style="background: transparent !important;">
+          <a href="./static/Realtime_Avatar_Content.pdf"
+              class="external-link button is-normal is-rounded is-dark" style="background: rgba(0, 0, 0, 0.5) !important;">
+            <span class="icon" style="background: transparent !important;">
+              <img src="./static/images/docs_icon_3.png" alt="Report Icon" 
+                style="width: 100%; height: 100%; object-fit: contain;">
+            </span>
+            <span style="background: transparent !important;">Report</span>
+          </a>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="hero-body">
+    <div class="container" style="max-width: 80%;">
+      <h2 class="title is-3">Diverse Character Styles</h2>
+      <p> Livatar supports a wide variety of character styles, including anime, cartoon, photorealistic, and oil painting aesthetics, among others.</p>
+    </div>  
+  </div> 
+  <div class="hero-body" style="margin-top: -4rem;">
+  <!-- animate human -->
+    <div class="container" style="max-width: 80%;">
+      <div id="results-carousel" class="carousel results-carousel" style="margin-top: -1.3rem;">
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/1ade0413-9ea4-49ca-9ea8-eb2a2fbd7363.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/cd1444de-0c23-4866-a778-c9acd465d65b.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/27e02092-573d-457a-9792-e791ce6763d6.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/9a599372-f620-4aaa-a2e8-024f3854a459.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        
+      </div>
+    </div>
+
+    <div class="container" style="max-width: 80%;">
+      <div id="results-carousel" class="carousel results-carousel" style="margin-top: 1.3rem;">
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/8807e646-7b43-45f0-8e2b-3503a603f0a7.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/be06f9c8-3a79-4efe-9283-9e8704df1152.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/55b3ddf9-271f-4d8f-b528-ebee73d28386.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/8893c434-ac6b-42aa-9c2d-ea48aea7c70a.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container" style="max-width: 80%;">
+      <div id="results-carousel" class="carousel results-carousel" style="margin-top: 1.3rem;">
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/5c4a7f61-07f7-467b-a061-56644f116555.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/95ea02a1-b9e7-4864-9afb-27a5a6bce33d.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/d495995d-45ff-462a-b133-623c43d2165a.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/multi_style/967089b1-7e4e-4e55-af36-391af7da23a5.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+    
+</section> 
+
+<!-- Face direction -->
+<section class="section">
+  <div class="hero-body">
+    <div class="container" style="max-width: 80%;">
+      <h2 class="title is-3">Diverse Facial Orientations</h2>
+      <p> Livatar supports the animation of reference images with diverse facial orientations, including individuals facing forward, in profile, or with head turns.</p>
+    </div>  
+  </div> 
+  <div class="hero-body" style="margin-top: -4rem;">
+    <div class="container" style="max-width: 80%;">
+      <h3 class="title is-4"></h3> 
+      <div id="results-carousel" class="carousel results-carousel" style="margin-top: -1.3rem;">
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/64b72b07-4a81-4197-90c3-dc09dea1f476.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/260d260c-da28-4486-b7fd-3eeeb04a7ff2.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/d5321a47-5357-4a04-a113-e2e83c4f6bfd.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/b6afbea2-317e-4274-bb37-7a28dbf5910b.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+      </div>
+
+      <div id="results-carousel" class="carousel results-carousel" style="margin-top: 1.3rem;">
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/62b49cde-5906-44d3-b0ab-67912a380da9.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/d9e313a7-f4d0-4549-b6aa-d38a3b28406c.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/73d36e45-e017-42e8-8a40-da505d9372b5.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+        <div class="prompt-wrap">
+          <video poster="" autoplay controls muted loop playsinline>
+            <source src="./static/livatar_video/facial_toward/218a8af9-95ad-4ac1-9c38-2aa750dfc143.mp4"
+                    type="video/mp4">
+          </video>
+          <div class="prompt"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Diverse Character Animations Scales -->
+<section class="section">
+  <div class="hero-body">
+    <div class="container" style="max-width: 80%;">
+      <h2 class="title is-3">Diverse Characters Ages</h2>
+      <p> Livatar supports character animations across a wide range of ages and genders, including elderly, middle-aged, young adults, and adolescents, and is robust to variations in ethnicity, facial morphology, and demographic attributes.</p>
+    </div>  
+  </div> 
+
+  <div class="hero-body" style="margin-top: 12rem;">
+    <div class="prompt-wrap full-screen-wrap">
+      <video poster="" autoplay controls muted loop playsinline
+            style="width:80%; height: auto; object-fit: contain;">
+        <source src="./static/livatar_video/diverse_age.mp4"
+                type="video/mp4">
+      </video>
+    </div>
+  </div>
+  
+  </div>
+</section>
+
+<section class="section" style="margin-top: 3.0rem;">
+  <div class="container is-max-desktop">
+    <div class="prompt-wrap full-screen-wrap">
+      <!-- 这里的 loading-video 占位可以删掉 -->
+    </div>
+    <div class="columns is-vcentered" style="margin-top: 0rem;">
+      <div class="content has-text-justified">
+        <p>
+          We present Livatar, a real-time audio-driven talking heads videos generation framework. 
+          Existing baselines suffer from limited lip-sync accuracy and long-term pose drift. 
+          We address these limitations with a flow matching based framework. 
+          Coupled with system optimizations, Livatar achieves competitive lip-sync quality with a 8.50 LipSync Confidence on the HDTF dataset, 
+          and reaches a throughput of 141 FPS with an end-to-end latency of 0.17s on a single A10 GPU. This makes high-fidelity avatars accessible to broader applications. 
+          Our project is available at <a href="https://www.hedra.com/">https://www.hedra.com/</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+
+<!-- <section class="section" >
+  <div class="container is-max-desktop" style="margin-top: 10rem;">
+    <h2 class="title is-3">System Pipeline</h2>
+    <div class="container" style="max-width: 100%;">
+      <img src="./static/arxiv_method.jpg" alt="Full Body">
+    </div>
+
+    <div class="columns is-centered has-text-centered", style="margin-top: 2rem;">
+      <div class="column is-full-width">
+        <div class="content has-text-justified">
+          <p>
+            Livatar generates talking-head videos from a single reference image and an audio stream. 
+            First, an Autoencoder disentangles the reference image into a static appearance feature and an initial, identity-agnostic motion feature. 
+            Next, the Audio-to-Motion Generator takes the initial motion and the audio stream as input to generate a new sequence of audio-aligned motion features. 
+            Finally, the Autoencoder's decoder synthesizes the output video by warping the appearance feature according to the generated motion sequence.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section> -->
+
+<!-- <section class="section" id="BibTeX">
+  <div class="container is-max-desktop content" style="margin-top: 10rem;">
+    <h2 class="title">BibTeX</h2>
+      <pre><code>
+        
+      </code></pre>
+  </div>
+</section> -->
+
+</body>
+</html>
